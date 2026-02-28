@@ -1,30 +1,33 @@
 import { useState, useRef, useEffect } from 'react'
-import { chatWithAI, isAIConfigured } from '../services/groqAi'
-import { Send, MessageCircle, Sparkles, Bot, User, Trash2, Lightbulb, Zap, Wifi, WifiOff } from 'lucide-react'
+import { chatWithAI, getProviderLabel } from '../services/groqAi'
+import { Send, MessageCircle, Sparkles, Bot, User, Trash2, Lightbulb, Zap, Globe2 } from 'lucide-react'
 
 const suggestedQuestions = [
   "Tell me about Morocco",
-  "Most sustainable destinations?",
-  "Cultural heritage sites to visit",
-  "Best budget-friendly trips",
-  "How can I travel more sustainably?",
-  "Hidden gems in Europe",
-  "Compare train vs flight carbon impact",
-  "When is the best time to visit Japan?",
+  "Best sustainable destinations right now?",
+  "Hidden gems in Southeast Asia",
+  "How much CO₂ does a flight to Paris produce?",
+  "Plan a 7-day eco-trip to Japan",
+  "What is overtourism and how to avoid it?",
+  "Best budget destinations in Europe?",
+  "Compare train vs flight for London to Rome",
 ]
 
 const INITIAL_MESSAGE = {
   role: 'ai',
-  content: `Hello! I'm your WanderWise AI travel companion 🌍
+  content: `Hello! I'm WanderWise AI — your real-time travel intelligence assistant 🌍
 
-I can help you with:
-• **Destination recommendations** — Ask about any country or city
-• **Sustainability tips** — How to travel greener
-• **Cultural heritage** — Discover world treasures
-• **Budget planning** — Best value sustainable trips
-• **Weather & timing** — When to visit
+I'm powered by a live AI model and fetch real Wikipedia + weather data before answering, so my responses reflect actual current knowledge about any destination.
 
-What destination or topic interests you?`,
+Ask me anything:
+• **Any destination in the world** — culture, tips, best time to visit
+• **Carbon footprint** — compare transport modes, calculate your impact
+• **Heritage & culture** — UNESCO sites, local traditions, history
+• **Trip planning** — itineraries, budget, visa, packing
+• **Sustainability** — eco-friendly alternatives, responsible travel
+
+What would you like to explore?`,
+  provider: getProviderLabel(),
   timestamp: new Date(),
 }
 
@@ -32,9 +35,9 @@ export default function Assistant() {
   const [messages, setMessages] = useState([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [activeProvider, setActiveProvider] = useState(getProviderLabel())
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
-  const aiConfigured = isAIConfigured()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -61,10 +64,12 @@ export default function Assistant() {
         .filter((m) => m !== INITIAL_MESSAGE)
         .map((m) => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }))
 
-      const aiResponse = await chatWithAI(history)
+      const result = await chatWithAI(history)
+      const aiResponse = typeof result === 'string' ? { text: result, provider: getProviderLabel() } : result
+      setActiveProvider(aiResponse.provider || getProviderLabel())
       setMessages((prev) => [
         ...prev,
-        { role: 'ai', content: aiResponse, timestamp: new Date() },
+        { role: 'ai', content: aiResponse.text, provider: aiResponse.provider, timestamp: new Date() },
       ])
     } catch (err) {
       console.error('Chat error:', err)
@@ -129,8 +134,8 @@ export default function Assistant() {
           Chat with <span className="gradient-text">WanderWise AI</span>
         </h1>
         <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-          Your personal AI travel companion. Ask about destinations, sustainability,
-          cultural heritage, or get personalized trip recommendations.
+          Powered by a real AI model with live Wikipedia + weather context injection.
+          Ask anything — every answer is generated fresh, not from a script.
         </p>
       </div>
 
@@ -148,7 +153,10 @@ export default function Assistant() {
                 <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
                 Online
                 <span className="px-1.5 py-0.5 rounded bg-white/15 text-[10px] font-medium flex items-center gap-1">
-                  {aiConfigured ? <><Zap size={9} /> Groq AI</> : <><Sparkles size={9} /> Local Mode</>}
+                  <Zap size={9} /> {activeProvider}
+                </span>
+                <span className="px-1.5 py-0.5 rounded bg-white/15 text-[10px] font-medium flex items-center gap-1">
+                  <Globe2 size={9} /> Live Data
                 </span>
               </div>
             </div>
@@ -183,14 +191,22 @@ export default function Assistant() {
               </div>
 
               {/* Bubble */}
-              <div
-                className={`max-w-[80%] px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'chat-bubble-user'
-                    : 'chat-bubble-ai'
-                }`}
-              >
-                {msg.role === 'ai' ? formatContent(msg.content) : msg.content}
+              <div className={`max-w-[80%] flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div
+                  className={`px-4 py-3 text-sm leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'chat-bubble-user'
+                      : 'chat-bubble-ai'
+                  }`}
+                >
+                  {msg.role === 'ai' ? formatContent(msg.content) : msg.content}
+                </div>
+                {msg.role === 'ai' && msg.provider && (
+                  <span className="text-[10px] text-slate-400 px-2 flex items-center gap-1">
+                    <Zap size={8} className="text-emerald-400" />
+                    {msg.provider}
+                  </span>
+                )}
               </div>
             </div>
           ))}
