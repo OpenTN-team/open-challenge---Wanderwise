@@ -61,7 +61,7 @@ async function fetchLiveContext(message) {
 
     // Wikipedia summary
     const wiki = await wikiMod.fetchDestinationInfo(dest).catch(() => null)
-    if (wiki?.summary) results.wiki = wiki.summary.slice(0, 800)
+    if (wiki?.extract) results.wiki = wiki.extract.slice(0, 800)
 
     // Geocode + weather
     const cities = await nominatimMod.searchCities(dest, 1).catch(() => [])

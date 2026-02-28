@@ -1,9 +1,19 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import L from 'leaflet'
-import { heritageSites as mockSites, heritageCategories } from '../data/mockData'
+import { heritageCategories } from '../data/mockData'
 import { useCitySearch } from '../hooks/useApi'
+import { fetchPlacePhoto } from '../services/photos'
 import { Landmark, Shield, AlertTriangle, Calendar, Filter, Search, Loader2, Globe2, MapPin, X } from 'lucide-react'
+
+// 5 world heritage hotspots to auto-load on mount
+const HERITAGE_HOTSPOTS = [
+  { lat: 41.9028, lng: 12.4964, name: 'Rome' },
+  { lat: 30.0444, lng: 31.2357, name: 'Cairo' },
+  { lat: 37.9838, lng: 23.7275, name: 'Athens' },
+  { lat: 27.1751, lng: 78.0421, name: 'Agra' },
+  { lat: 19.4326, lng: -99.1332, name: 'Mexico City' },
+]
 
 // Custom marker icon
 const createIcon = (color) =>
@@ -45,6 +55,9 @@ export default function Heritage() {
   const [mapCenter, setMapCenter] = useState([30, 10])
   const [mapZoom, setMapZoom] = useState(3)
   const [enrichedInfo, setEnrichedInfo] = useState({})
+  const [autoLoadedSites, setAutoLoadedSites] = useState([])
+  const [initialLoading, setInitialLoading] = useState(true)
+  const autoLoaded = useRef(false)
 
   const { results: cityResults, loading: searching } = useCitySearch(searchQuery)
 
@@ -72,14 +85,14 @@ export default function Heritage() {
         significance: site.heritage || site.designation || 'Cultural heritage site',
         threats: ['Climate change', 'Urban development'],
         preservation: 'Visit responsibly and support local preservation efforts.',
-        image: `https://placehold.co/600x400/f59e0b/white?text=${encodeURIComponent(site.name || 'Heritage')}`,
+        image: null,
         isLive: true,
       }))
 
       setLiveSites(formattedSites)
 
       // Enrich first few sites with Wikipedia data
-      enrichSitesWithWiki(formattedSites.slice(0, 5))
+      enrichSitesWithWiki(formattedSites)
     } catch (err) {
       console.warn('Heritage fetch failed:', err)
       setLiveSites([])
@@ -88,30 +101,94 @@ export default function Heritage() {
     }
   }, [])
 
-  // Enrich sites with Wikipedia descriptions and images
+  // Enrich sites with Wikipedia descriptions and real photos
   const enrichSitesWithWiki = async (sites) => {
     try {
       const { fetchDestinationInfo } = await import('../services/wikipedia.js')
       for (const site of sites) {
         try {
-          const info = await fetchDestinationInfo(site.name)
-          if (info) {
-            setEnrichedInfo((prev) => ({
-              ...prev,
-              [site.id]: {
-                description: info.summary || site.description,
-                image: info.image || site.image,
-              },
-            }))
+          const [info, photo] = await Promise.allSettled([
+            fetchDestinationInfo(site.name),
+            fetchPlacePhoto(site.name, site.country),
+          ])
+          const wikiData = info.status === 'fulfilled' ? info.value : null
+          const photoUrl = photo.status === 'fulfilled' ? photo.value : null
+          // Primary: wiki thumbnail / original image / direct photo by site name
+          let image = wikiData?.thumbnail || wikiData?.originalImage || photoUrl
+          // Secondary fallback: search by city name when specific site has no photo
+          if (!image && site.country) {
+            image = await fetchPlacePhoto(site.country, '').catch(() => null)
           }
+          // Tertiary: use whatever was in site.image (may be null)
+          if (!image) image = site.image
+          setEnrichedInfo((prev) => ({
+            ...prev,
+            [site.id]: {
+              description: wikiData?.extract || site.description,
+              image,
+            },
+          }))
         } catch (e) {
-          // Skip individual failures
+          // Skip individual failures silently
         }
       }
     } catch (err) {
       console.warn('Wiki enrichment failed:', err)
     }
   }
+
+  // Auto-load real heritage from world hotspots on mount
+  useEffect(() => {
+    if (autoLoaded.current) return
+    autoLoaded.current = true
+    async function loadFeatured() {
+      setInitialLoading(true)
+      try {
+        const { fetchHeritageSites } = await import('../services/overpass.js')
+        const results = await Promise.allSettled(
+          HERITAGE_HOTSPOTS.map((h) => fetchHeritageSites(h.lat, h.lng, 25))
+        )
+        const all = []
+        results.forEach((r, idx) => {
+          if (r.status === 'fulfilled') {
+            const cityName = HERITAGE_HOTSPOTS[idx].name
+            r.value.slice(0, 8).forEach((site, i) => {
+              all.push({
+                id: `featured-${idx}-${i}-${site.id}`,
+                name: site.name || `Heritage Site`,
+                country: cityName,
+                lat: site.lat,
+                lng: site.lng,
+                category: site.type || 'historic',
+                year: site.yearBuilt ? parseInt(site.yearBuilt) : 0,
+                description: site.description || `A significant heritage site near ${cityName}.`,
+                significance: site.heritage ? `Heritage designation: ${site.heritage}` : 'Cultural heritage site',
+                threats: ['Climate change', 'Urban development', 'Tourism pressure'],
+                preservation: 'Visit responsibly and support local preservation efforts.',
+                image: site.image || null,
+                isLive: true,
+              })
+            })
+          }
+        })
+        // Deduplicate by name
+        const seen = new Set()
+        const unique = all.filter((s) => {
+          const key = s.name.toLowerCase().trim()
+          if (seen.has(key) || key === 'heritage site') return false
+          seen.add(key)
+          return true
+        })
+        setAutoLoadedSites(unique)
+        enrichSitesWithWiki(unique)
+      } catch (err) {
+        console.warn('Auto heritage load failed:', err)
+      } finally {
+        setInitialLoading(false)
+      }
+    }
+    loadFeatured()
+  }, [])
 
   const handleSelectCity = (city) => {
     setSearchQuery(city.displayName || city.name)
@@ -128,7 +205,8 @@ export default function Heritage() {
     setEnrichedInfo({})
   }
 
-  const currentSites = searchMode ? liveSites : mockSites
+  // currentSites: search results when searching, else auto-loaded world heritage
+  const currentSites = searchMode ? liveSites : autoLoadedSites
   const filteredSites =
     activeCategory === 'all'
       ? currentSites
@@ -140,7 +218,7 @@ export default function Heritage() {
     return {
       ...site,
       description: enriched?.description || site.description,
-      image: enriched?.image || site.image,
+      image: enriched?.image || site.image || `https://placehold.co/600x400/f59e0b/white?text=${encodeURIComponent(site.name || 'Heritage')}`,
     }
   }
 
@@ -203,6 +281,22 @@ export default function Heritage() {
           <div className="mt-3 flex items-center gap-2 justify-center text-amber-600">
             <Loader2 size={16} className="animate-spin" />
             <span className="text-sm">Fetching heritage sites from Overpass API...</span>
+          </div>
+        )}
+
+        {!searchMode && initialLoading && (
+          <div className="mt-3 flex items-center gap-2 justify-center text-amber-600">
+            <Loader2 size={16} className="animate-spin" />
+            <span className="text-sm">Loading world heritage sites from OpenStreetMap...</span>
+          </div>
+        )}
+
+        {!searchMode && !initialLoading && autoLoadedSites.length > 0 && (
+          <div className="mt-3 flex items-center gap-2 justify-center">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+              <Globe2 size={12} />
+              {autoLoadedSites.length} real heritage sites from Rome, Cairo, Athens, Agra &amp; Mexico City
+            </span>
           </div>
         )}
 
@@ -277,10 +371,24 @@ export default function Heritage() {
 
         {/* Site List */}
         <div className="lg:col-span-2 space-y-4 max-h-[500px] overflow-y-auto pr-2">
-          {filteredSites.length === 0 && !loading && (
+          {filteredSites.length === 0 && !loading && !initialLoading && (
             <div className="text-center py-8 text-slate-400">
               <Landmark size={32} className="mx-auto mb-2 opacity-40" />
               <p className="text-sm">{searchMode ? 'No sites match this filter' : 'Search a city to discover heritage sites'}</p>
+            </div>
+          )}
+          {initialLoading && !searchMode && (
+            <div className="space-y-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="p-4 rounded-xl border border-slate-200 bg-white animate-pulse flex gap-3">
+                  <div className="w-16 h-16 bg-slate-200 rounded-lg flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-slate-200 rounded w-3/4" />
+                    <div className="h-3 bg-slate-100 rounded w-1/2" />
+                    <div className="h-5 bg-slate-100 rounded w-1/3" />
+                  </div>
+                </div>
+              ))}
             </div>
           )}
           {filteredSites.map((site) => {

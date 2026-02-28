@@ -1,8 +1,18 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Sparkles, Map, Landmark, Leaf, BarChart3, MessageCircle,
-  ArrowRight, Globe, Users, TreePine, Brain, ChevronRight
+  ArrowRight, Globe, Users, TreePine, Brain, ChevronRight,
+  Thermometer, MapPin, Loader2
 } from 'lucide-react'
+
+// 4 featured destinations to fetch live on home page
+const FEATURED = [
+  { name: 'Kyoto',      country: 'Japan',        lat: 35.0116,  lng: 135.7681, emoji: '\ud83c\uddef\ud83c\uddf5' },
+  { name: 'Chefchaouen', country: 'Morocco',     lat: 35.1688,  lng: -5.2636,  emoji: '\ud83c\uddf2\ud83c\udde6' },
+  { name: 'Ljubljana',  country: 'Slovenia',     lat: 46.0569,  lng: 14.5058,  emoji: '\ud83c\uddf8\ud83c\uddee' },
+  { name: 'Cape Town',  country: 'South Africa', lat: -33.9249, lng: 18.4241,  emoji: '\ud83c\uddff\ud83c\udde6' },
+]
 
 const features = [
   {
@@ -50,6 +60,35 @@ const stats = [
 ]
 
 export default function Home() {
+  const [liveCards, setLiveCards] = useState([])
+  const [liveLoading, setLiveLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchFeatured() {
+      setLiveLoading(true)
+      const results = await Promise.allSettled(
+        FEATURED.map(async (city) => {
+          const [wikiMod, weatherMod] = await Promise.all([
+            import('../services/wikipedia.js'),
+            import('../services/openMeteo.js'),
+          ])
+          const [wiki, weather] = await Promise.allSettled([
+            wikiMod.fetchDestinationInfo(city.name, city.country),
+            weatherMod.fetchWeather(city.lat, city.lng),
+          ])
+          return {
+            ...city,
+            wiki: wiki.status === 'fulfilled' ? wiki.value : null,
+            weather: weather.status === 'fulfilled' ? weather.value : null,
+          }
+        })
+      )
+      setLiveCards(results.filter((r) => r.status === 'fulfilled').map((r) => r.value))
+      setLiveLoading(false)
+    }
+    fetchFeatured()
+  }, [])
+
   return (
     <div>
       {/* Hero Section */}
@@ -117,6 +156,83 @@ export default function Home() {
 
       {/* Features */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        {/* Live Featured Destinations */}
+        <div className="mb-20">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-100 text-sky-700 text-sm font-medium mb-4">
+              <Sparkles size={14} className="animate-pulse" />
+              Live Right Now
+            </div>
+            <h2 className="text-3xl font-bold">
+              Real-Time Destination <span className="gradient-text">Snapshots</span>
+            </h2>
+            <p className="text-slate-500 mt-2 text-sm">
+              Live weather &amp; Wikipedia data fetched fresh every visit — no cache, no dummy data.
+            </p>
+          </div>
+
+          {liveLoading ? (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden animate-pulse">
+                  <div className="h-36 bg-slate-200" />
+                  <div className="p-4 space-y-2">
+                    <div className="h-5 bg-slate-200 rounded w-2/3" />
+                    <div className="h-4 bg-slate-100 rounded w-1/2" />
+                    <div className="h-8 bg-slate-100 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {liveCards.map((city) => {
+                const desc = city.wiki?.extract
+                  ? city.wiki.extract.split('.')[0] + '.'
+                  : `A remarkable destination in ${city.country}.`
+                const img = city.wiki?.thumbnail || city.wiki?.originalImage
+                const temp = city.weather?.current?.temperature
+                return (
+                  <Link
+                    key={city.name}
+                    to="/recommender"
+                    className="group bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                  >
+                    <div className="relative h-36">
+                      {img ? (
+                        <img src={img} alt={city.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-emerald-100 to-teal-200 flex items-center justify-center text-4xl">
+                          {city.emoji}
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                      {temp != null && (
+                        <div className="absolute top-3 right-3 bg-white/90 rounded-full px-2 py-1 flex items-center gap-1 text-xs font-bold text-sky-700">
+                          <Thermometer size={11} className="text-sky-500" />
+                          {Math.round(temp)}°C
+                        </div>
+                      )}
+                      <div className="absolute bottom-3 left-3">
+                        <p className="text-white font-bold text-base leading-tight">{city.name}</p>
+                        <p className="text-white/80 text-xs flex items-center gap-1">
+                          <MapPin size={10} /> {city.country} {city.emoji}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{desc}</p>
+                      <div className="mt-3 flex items-center gap-1 text-emerald-600 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                        Explore <ChevronRight size={12} />
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
             Reimagining Tourism with <span className="gradient-text">AI</span>
