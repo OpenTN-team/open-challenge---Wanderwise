@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WanderWise — Presentation</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+    
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0f172a;
+      color: white;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    .slide {
+      display: none;
+      height: 100vh;
+      padding: 60px 80px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .slide.active { display: flex; flex-direction: column; justify-content: center; }
+
+    .slide-number {
+      position: absolute;
+      bottom: 30px;
+      right: 40px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .nav-hint {
+      position: fixed;
+      bottom: 30px;
+      left: 40px;
+      font-size: 13px;
+      color: rgba(255,255,255,0.3);
+      z-index: 100;
+    }
+
+    h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 20px; }
+    h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 16px; }
+    h3 { font-size: 1.5rem; font-weight: 600; margin-bottom: 12px; color: #94a3b8; }
+    p { font-size: 1.25rem; line-height: 1.6; color: #cbd5e1; }
+    .small { font-size: 1rem; }
+
+    .gradient { background: linear-gradient(135deg, #10b981, #0ea5e9); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gradient-amber { background: linear-gradient(135deg, #f59e0b, #ef4444); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .tag {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .tag-green { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .tag-blue { background: rgba(14, 165, 233, 0.2); color: #38bdf8; }
+    .tag-amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+    .tag-purple { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; margin-top: 30px; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 30px; }
+
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 28px;
+    }
+    .card h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; }
+    .card p { font-size: 0.95rem; color: #94a3b8; }
+    .card .icon { font-size: 2rem; margin-bottom: 12px; }
+
+    .stat { text-align: center; }
+    .stat .number { font-size: 3rem; font-weight: 800; }
+    .stat .label { font-size: 0.9rem; color: #64748b; margin-top: 4px; }
+
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+    }
+    .blob-green { background: #10b981; }
+    .blob-blue { background: #0ea5e9; }
+    .blob-purple { background: #8b5cf6; }
+
+    .feature-list { list-style: none; margin-top: 16px; }
+    .feature-list li {
+      padding: 10px 0;
+      font-size: 1.1rem;
+      color: #e2e8f0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .feature-list li span.bullet {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      flex-shrink: 0;
+    }
+
+    .timeline { display: flex; align-items: flex-start; gap: 0; margin-top: 40px; }
+    .timeline-item { flex: 1; text-align: center; position: relative; }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      right: -50%;
+      height: 2px;
+      background: rgba(16, 185, 129, 0.3);
+    }
+    .timeline-item:last-child::before { display: none; }
+    .timeline-dot {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #0ea5e9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      margin: 0 auto 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .timeline-item h4 { font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+    .timeline-item p { font-size: 0.8rem; color: #64748b; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .animate { animation: fadeIn 0.6s ease forwards; }
+  </style>
+</head>
+<body>
+
+  <!-- SLIDE 1: Title -->
+  <div class="slide active" id="slide-1">
+    <div class="blob blob-green" style="width:400px;height:400px;top:-100px;right:-100px;"></div>
+    <div class="blob blob-blue" style="width:300px;height:300px;bottom:-50px;left:-50px;"></div>
+    <div class="tag tag-green">🌍 Open Innovation Challenge 2026</div>
+    <h1>Wander<span class="gradient">Wise</span></h1>
+    <h3>AI-Powered Sustainable Tourism Platform</h3>
+    <p style="max-width:700px; margin-top:20px;">
+      Reimagining how artificial intelligence can personalize travel experiences,
+      promote cultural heritage, and build smarter, more sustainable tourism ecosystems.
+    </p>
+    <div style="margin-top:40px; display:flex; gap:20px;">
+      <div class="tag tag-green">🤖 AI-Powered</div>
+      <div class="tag tag-blue">🌿 Sustainable</div>
+      <div class="tag tag-amber">🏛️ Heritage</div>
+      <div class="tag tag-purple">📊 Data-Driven</div>
+    </div>
+    <div class="slide-number">1 / 10</div>
+  </div>
+
+  <!-- SLIDE 2: Problem -->
+  <div class="slide" id="slide-2">
+    <div class="blob blob-purple" style="width:350px;height:350px;top:50px;right:100px;"></div>
+    <div class="tag tag-amber">⚠️ The Challenge</div>
+    <h2>Tourism Today: Unsustainable & Generic</h2>
+    <div class="grid-2">
+      <div>
+        <ul class="feature-list">
+          <li><span class="bullet" style="background:#ef4444;"></span> Tourism accounts for <strong>8% of global CO₂ emissions</strong></li>
+          <li><span class="bullet" style="background:#ef4444;"></span> Overtourism degrades <strong>UNESCO heritage sites</strong></li>
+          <li><span class="bullet" style="background:#ef4444;"></span> <strong>49%</strong> of tourism carbon comes from flights</li>
+          <li><span class="bullet" style="background:#ef4444;"></span> Generic recommendations ignore sustainability</li>
+          <li><span class="bullet" style="background:#ef4444;"></span> Cultural heritage is <strong>underfunded</strong> and at risk</li>
+          <li><span class="bullet" style="background:#ef4444;"></span> Travelers lack tools to make <strong>informed choices</strong></li>
+        </ul>
+      </div>
+      <div>
+        <div class="card" style="text-align:center;">
+          <div class="stat">
+            <div class="number gradient-amber">8%</div>
+            <div class="label">of global CO₂ from tourism</div>
+          </div>
+          <div style="margin-top:30px;" class="stat">
+            <div class="number gradient-amber">1.5B</div>
+            <div class="label">international tourist arrivals/year</div>
+          </div>
+          <div style="margin-top:30px;" class="stat">
+            <div class="number gradient-amber">40%</div>
+            <div class="label">of heritage funding from tourism</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">2 / 10</div>
+  </div>
+
+  <!-- SLIDE 3: Solution -->
+  <div class="slide" id="slide-3">
+    <div class="blob blob-green" style="width:500px;height:500px;bottom:-200px;right:-200px;"></div>
+    <div class="tag tag-green">💡 Our Solution</div>
+    <h2>WanderWise: <span class="gradient">AI for Good Tourism</span></h2>
+    <p style="max-width:700px;">An integrated platform that uses AI to transform tourism 
+    into a force for cultural preservation, sustainability, and personalized discovery.</p>
+    <div class="grid-5" style="margin-top:40px;">
+      <div class="card" style="text-align:center;">
+        <div class="icon">🎯</div>
+        <h4>AI Recommender</h4>
+        <p>Personalized sustainable destination matching</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="icon">🏛️</div>
+        <h4>Heritage Explorer</h4>
+        <p>Interactive maps of cultural treasures</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="icon">🌿</div>
+        <h4>Eco Dashboard</h4>
+        <p>Carbon tracking & green alternatives</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="icon">📊</div>
+        <h4>Smart Destinations</h4>
+        <p>Crowd prediction & hidden gems</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="icon">🤖</div>
+        <h4>AI Assistant</h4>
+        <p>Conversational travel companion</p>
+      </div>
+    </div>
+    <div class="slide-number">3 / 10</div>
+  </div>
+
+  <!-- SLIDE 4: AI Recommender -->
+  <div class="slide" id="slide-4">
+    <div class="blob blob-blue" style="width:400px;height:400px;top:-100px;left:-100px;"></div>
+    <div class="tag tag-blue">🎯 Feature 1</div>
+    <h2>AI Travel <span class="gradient">Recommender</span></h2>
+    <div class="grid-2">
+      <div>
+        <p>Our recommendation engine considers multiple factors to provide truly personalized, sustainable suggestions:</p>
+        <ul class="feature-list" style="margin-top:20px;">
+          <li><span class="bullet"></span> <strong>Interest matching</strong> — Maps preferences to destination categories</li>
+          <li><span class="bullet"></span> <strong>Sustainability scoring</strong> — Eco-score weighted rankings</li>
+          <li><span class="bullet"></span> <strong>Budget optimization</strong> — Best value within constraints</li>
+          <li><span class="bullet"></span> <strong>Crowd avoidance</strong> — Promotes off-peak & hidden gems</li>
+          <li><span class="bullet"></span> <strong>Cultural depth</strong> — Prioritizes authentic experiences</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 style="color:#10b981;">How the AI Scores:</h4>
+        <p style="margin-top:12px; font-size:0.9rem; color:#94a3b8;">
+          Base Score: <strong style="color:white;">50 pts</strong><br><br>
+          + Category Match: <strong style="color:white;">20 pts/match</strong><br>
+          + Budget Fit: <strong style="color:white;">15 pts</strong><br>
+          + Eco Score: <strong style="color:white;">up to 20 pts</strong><br>
+          + Hidden Gem Bonus: <strong style="color:white;">10 pts</strong><br>
+          + Low Crowd Bonus: <strong style="color:white;">8 pts</strong><br><br>
+          <span style="color:#10b981;">→ Ranked by composite AI match %</span>
+        </p>
+      </div>
+    </div>
+    <div class="slide-number">4 / 10</div>
+  </div>
+
+  <!-- SLIDE 5: Heritage -->
+  <div class="slide" id="slide-5">
+    <div class="blob blob-purple" style="width:400px;height:400px;bottom:-100px;left:200px;"></div>
+    <div class="tag tag-amber">🏛️ Feature 2</div>
+    <h2>Cultural Heritage <span class="gradient">Explorer</span></h2>
+    <div class="grid-2">
+      <div>
+        <p>An interactive, map-based interface connecting travelers with world heritage:</p>
+        <ul class="feature-list" style="margin-top:20px;">
+          <li><span class="bullet" style="background:#f59e0b;"></span> Interactive Leaflet.js map with categorized markers</li>
+          <li><span class="bullet" style="background:#f59e0b;"></span> Filterable: Architecture, Religious, Natural, Artisan</li>
+          <li><span class="bullet" style="background:#f59e0b;"></span> Detailed site profiles with historical context</li>
+          <li><span class="bullet" style="background:#f59e0b;"></span> <strong>Threat analysis</strong> — current risks to each site</li>
+          <li><span class="bullet" style="background:#f59e0b;"></span> Preservation efforts & how tourism helps</li>
+          <li><span class="bullet" style="background:#f59e0b;"></span> UNESCO significance and protection status</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h4 style="color:#f59e0b;">Featured Heritage Sites</h4>
+        <div style="margin-top:16px;">
+          <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <strong>🇲🇦 Fes el Bali Medina</strong><br>
+            <span style="font-size:0.85rem; color:#64748b;">World's largest car-free urban zone (789 CE)</span>
+          </div>
+          <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <strong>🇰🇭 Angkor Wat</strong><br>
+            <span style="font-size:0.85rem; color:#64748b;">Largest religious monument (1113 CE)</span>
+          </div>
+          <div style="padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <strong>🇪🇨 Galápagos Islands</strong><br>
+            <span style="font-size:0.85rem; color:#64748b;">First UNESCO Heritage Site (1978)</span>
+          </div>
+          <div style="padding:10px 0;">
+            <strong>🇲🇦 Zellige Mosaic Workshops</strong><br>
+            <span style="font-size:0.85rem; color:#64748b;">Intangible Cultural Heritage (900 CE)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">5 / 10</div>
+  </div>
+
+  <!-- SLIDE 6: Sustainability -->
+  <div class="slide" id="slide-6">
+    <div class="blob blob-green" style="width:400px;height:400px;top:-50px;right:0;"></div>
+    <div class="tag tag-green">🌿 Feature 3</div>
+    <h2>Sustainability <span class="gradient">Dashboard</span></h2>
+    <div class="grid-2">
+      <div>
+        <p>Empowering travelers to understand and minimize their environmental impact:</p>
+        <ul class="feature-list" style="margin-top:20px;">
+          <li><span class="bullet"></span> <strong>Carbon calculator</strong> — By destination, duration & transport</li>
+          <li><span class="bullet"></span> Tree offset estimates with visual context</li>
+          <li><span class="bullet"></span> Interactive charts (Chart.js doughnut & bar)</li>
+          <li><span class="bullet"></span> Destination eco-score comparison rankings</li>
+          <li><span class="bullet"></span> <strong>AI sustainability tips</strong> with impact metrics</li>
+          <li><span class="bullet"></span> Transport mode CO₂ comparison</li>
+        </ul>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <h4 style="color:#10b981;">Transport CO₂ Multipliers</h4>
+          <div style="margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span>✈️ Flight</span><span style="color:#ef4444; font-weight:700;">100%</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span>🚗 Car</span><span style="color:#f59e0b; font-weight:700;">45%</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span>🚌 Bus</span><span style="color:#f59e0b; font-weight:700;">25%</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span>🚄 Train</span><span style="color:#10b981; font-weight:700;">15%</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0;">
+              <span>🚲 Bicycle</span><span style="color:#10b981; font-weight:700;">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">6 / 10</div>
+  </div>
+
+  <!-- SLIDE 7: Smart Destinations -->
+  <div class="slide" id="slide-7">
+    <div class="blob blob-blue" style="width:350px;height:350px;bottom:0;right:100px;"></div>
+    <div class="tag tag-blue">📊 Feature 4</div>
+    <h2>Smart Destination <span class="gradient">Intelligence</span></h2>
+    <div class="grid-2">
+      <div>
+        <p>Data-driven destination management tools for travelers and tourism boards:</p>
+        <ul class="feature-list" style="margin-top:20px;">
+          <li><span class="bullet" style="background:#0ea5e9;"></span> <strong>12-month crowd predictions</strong> per destination</li>
+          <li><span class="bullet" style="background:#0ea5e9;"></span> AI recommends best visit month</li>
+          <li><span class="bullet" style="background:#0ea5e9;"></span> <strong>Hidden gems discovery</strong> — Low crowds, high eco scores</li>
+          <li><span class="bullet" style="background:#0ea5e9;"></span> Real-time crowd level map (color-coded)</li>
+          <li><span class="bullet" style="background:#0ea5e9;"></span> Savings insights: 20-35% cheaper in off-peak</li>
+          <li><span class="bullet" style="background:#0ea5e9;"></span> Cultural highlights per destination</li>
+        </ul>
+      </div>
+      <div>
+        <div class="card" style="margin-bottom:16px;">
+          <h4 style="color:#0ea5e9;">Top Hidden Gems (AI-Curated)</h4>
+          <div style="margin-top:12px; font-size:0.9rem;">
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span>🇧🇹 Bhutan</span><span style="color:#10b981;">Eco: 97</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span>🇸🇮 Ljubljana</span><span style="color:#10b981;">Eco: 94</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span>🇵🇹 Azores</span><span style="color:#10b981;">Eco: 91</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05);">
+              <span>🇱🇦 Luang Prabang</span><span style="color:#10b981;">Eco: 88</span>
+            </div>
+            <div style="display:flex; justify-content:space-between; padding:8px 0;">
+              <span>🇪🇪 Tallinn</span><span style="color:#10b981;">Eco: 86</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">7 / 10</div>
+  </div>
+
+  <!-- SLIDE 8: AI Assistant -->
+  <div class="slide" id="slide-8">
+    <div class="blob blob-purple" style="width:400px;height:400px;top:100px;left:-100px;"></div>
+    <div class="tag tag-purple">🤖 Feature 5</div>
+    <h2>AI Travel <span class="gradient">Assistant</span></h2>
+    <div class="grid-2">
+      <div>
+        <p>A conversational AI companion that makes trip planning effortless and informed:</p>
+        <ul class="feature-list" style="margin-top:20px;">
+          <li><span class="bullet" style="background:#8b5cf6;"></span> Natural language travel queries</li>
+          <li><span class="bullet" style="background:#8b5cf6;"></span> Context-aware responses about destinations</li>
+          <li><span class="bullet" style="background:#8b5cf6;"></span> Sustainability-focused recommendations</li>
+          <li><span class="bullet" style="background:#8b5cf6;"></span> Cultural heritage insights on demand</li>
+          <li><span class="bullet" style="background:#8b5cf6;"></span> Budget optimization suggestions</li>
+          <li><span class="bullet" style="background:#8b5cf6;"></span> Suggested questions for discovery</li>
+        </ul>
+      </div>
+      <div class="card" style="background:rgba(139,92,246,0.1); border-color:rgba(139,92,246,0.2);">
+        <h4 style="color:#a78bfa;">Sample Conversation</h4>
+        <div style="margin-top:16px; font-size:0.85rem;">
+          <div style="background:rgba(255,255,255,0.1); padding:10px 14px; border-radius:14px 14px 14px 4px; margin-bottom:10px; max-width:80%;">
+            <span style="color:#a78bfa; font-weight:600;">🤖 AI:</span> Hello! I'm your WanderWise AI companion. What destination are you dreaming about?
+          </div>
+          <div style="background:rgba(16,185,129,0.2); padding:10px 14px; border-radius:14px 14px 4px 14px; margin-bottom:10px; margin-left:auto; max-width:60%; text-align:right;">
+            <span style="color:#34d399; font-weight:600;">You:</span> Tell me about Morocco
+          </div>
+          <div style="background:rgba(255,255,255,0.1); padding:10px 14px; border-radius:14px 14px 14px 4px; max-width:80%;">
+            <span style="color:#a78bfa; font-weight:600;">🤖 AI:</span> Morocco is phenomenal! Top picks: Chefchaouen (Blue Pearl), Essaouira, Fes Medina. Sustainability: 82/100...
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">8 / 10</div>
+  </div>
+
+  <!-- SLIDE 9: Tech Stack -->
+  <div class="slide" id="slide-9">
+    <div class="blob blob-green" style="width:300px;height:300px;bottom:0;left:0;"></div>
+    <div class="blob blob-blue" style="width:300px;height:300px;top:0;right:0;"></div>
+    <div class="tag tag-green">🛠️ Technology</div>
+    <h2>Technical <span class="gradient">Architecture</span></h2>
+    <div class="grid-3" style="margin-top:30px;">
+      <div class="card" style="text-align:center;">
+        <div class="icon">⚛️</div>
+        <h4>React 19 + Vite</h4>
+        <p>Modern, fast frontend framework with HMR</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="icon">🎨</div>
+        <h4>Tailwind CSS 4</h4>
+        <p>Utility-first styling with custom design system</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="icon">🗺️</div>
+        <h4>Leaflet + React-Leaflet</h4>
+        <p>Interactive heritage & destination maps</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="icon">📊</div>
+        <h4>Chart.js</h4>
+        <p>Sustainability charts & crowd predictions</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="icon">🧭</div>
+        <h4>React Router v7</h4>
+        <p>SPA navigation with 6 core routes</p>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="icon">🤖</div>
+        <h4>AI Simulation Engine</h4>
+        <p>NLP-based chatbot & scoring algorithms</p>
+      </div>
+    </div>
+    <div style="margin-top:40px;">
+      <h3 style="color:white; font-size:1.1rem; margin-bottom:16px;">Scalability Roadmap</h3>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot">1</div>
+          <h4>Current: Prototype</h4>
+          <p>Mock AI, static data</p>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot">2</div>
+          <h4>Phase 2: Backend</h4>
+          <p>Node.js API, real DB</p>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot">3</div>
+          <h4>Phase 3: ML Models</h4>
+          <p>Real AI/ML predictions</p>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot">4</div>
+          <h4>Phase 4: Partnerships</h4>
+          <p>UNESCO, tourism boards</p>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot">5</div>
+          <h4>Phase 5: Mobile</h4>
+          <p>React Native app</p>
+        </div>
+      </div>
+    </div>
+    <div class="slide-number">9 / 10</div>
+  </div>
+
+  <!-- SLIDE 10: Thank You -->
+  <div class="slide" id="slide-10">
+    <div class="blob blob-green" style="width:500px;height:500px;top:50%;left:50%;transform:translate(-50%,-50%);opacity:0.1;"></div>
+    <div style="text-align:center; max-width:800px; margin:0 auto;">
+      <div class="tag tag-green">🌍 Open Innovation Challenge 2026</div>
+      <h1 style="font-size:4rem;">
+        Travel <span class="gradient">Smarter</span>,<br>
+        Explore <span class="gradient">Deeper</span>
+      </h1>
+      <p style="font-size:1.3rem; margin-top:20px; color:#94a3b8;">
+        WanderWise — Where AI meets sustainable tourism to protect heritage,
+        personalize experiences, and build a smarter future for travel.
+      </p>
+      <div class="grid-3" style="margin-top:50px;">
+        <div class="stat">
+          <div class="number gradient">5</div>
+          <div class="label">AI-Powered Modules</div>
+        </div>
+        <div class="stat">
+          <div class="number gradient">12+</div>
+          <div class="label">Curated Destinations</div>
+        </div>
+        <div class="stat">
+          <div class="number gradient">∞</div>
+          <div class="label">Impact Potential</div>
+        </div>
+      </div>
+      <p style="margin-top:50px; font-size:1.1rem; color:#64748b;">
+        Thank you! 🙏<br>
+        <strong style="color:white;">Let's reimagine tourism together.</strong>
+      </p>
+    </div>
+    <div class="slide-number">10 / 10</div>
+  </div>
+
+  <div class="nav-hint">← → Arrow keys to navigate | Slide <span id="current-slide">1</span> of 10</div>
+
+  <script>
+    let current = 1;
+    const total = 10;
+
+    function showSlide(n) {
+      document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+      const slide = document.getElementById(`slide-${n}`);
+      if (slide) {
+        slide.classList.add('active');
+        document.getElementById('current-slide').textContent = n;
+      }
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        if (current < total) { current++; showSlide(current); }
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (current > 1) { current--; showSlide(current); }
+      }
+    });
+
+    // Also support click to advance
+    document.addEventListener('click', (e) => {
+      if (e.clientX > window.innerWidth / 2) {
+        if (current < total) { current++; showSlide(current); }
+      } else {
+        if (current > 1) { current--; showSlide(current); }
+      }
+    });
+  </script>
+</body>
+</html>
