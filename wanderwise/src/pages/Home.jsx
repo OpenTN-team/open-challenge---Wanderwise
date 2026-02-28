@@ -8,45 +8,45 @@ const features = [
   {
     icon: Sparkles,
     title: "AI Travel Recommender",
-    description: "Get personalized destination suggestions based on your interests, budget, and sustainability preferences.",
+    description: "Search any city worldwide and get real-time Wikipedia, weather, and sustainability data powered by live APIs.",
     to: "/recommender",
     color: "from-emerald-500 to-teal-500",
   },
   {
     icon: Landmark,
     title: "Cultural Heritage Explorer",
-    description: "Discover and protect world heritage sites with interactive maps and AI-powered cultural insights.",
+    description: "Discover real heritage sites near any location using live Overpass API and OpenStreetMap data.",
     to: "/heritage",
     color: "from-amber-500 to-orange-500",
   },
   {
     icon: Leaf,
     title: "Sustainability Dashboard",
-    description: "Track your carbon footprint, compare eco-scores, and find greener travel alternatives.",
+    description: "Calculate real carbon footprint between any two cities with actual distance-based emission factors.",
     to: "/sustainability",
     color: "from-green-500 to-emerald-500",
   },
   {
     icon: BarChart3,
     title: "Smart Destination Manager",
-    description: "AI-powered crowd predictions, best visit times, and hidden gem recommendations.",
+    description: "Real weather forecasts, historical climate data, and AI crowd predictions from Open-Meteo API.",
     to: "/destinations",
     color: "from-sky-500 to-blue-500",
   },
   {
     icon: MessageCircle,
     title: "AI Travel Assistant",
-    description: "Chat with our AI companion for personalized itineraries, tips, and cultural insights.",
+    description: "Chat with AI powered by Groq LLM for real-time personalized travel advice and recommendations.",
     to: "/assistant",
     color: "from-violet-500 to-purple-500",
   },
 ]
 
 const stats = [
-  { icon: Globe, value: "12+", label: "Destinations", color: "text-emerald-500" },
-  { icon: Users, value: "50K+", label: "Travelers Helped", color: "text-sky-500" },
-  { icon: TreePine, value: "340t", label: "CO₂ Saved", color: "text-green-500" },
-  { icon: Brain, value: "AI", label: "Powered Insights", color: "text-violet-500" },
+  { icon: Globe, value: "195+", label: "Countries Searchable", color: "text-emerald-500" },
+  { icon: Users, value: "Real-Time", label: "Live API Data", color: "text-sky-500" },
+  { icon: TreePine, value: "Accurate", label: "Carbon Calculations", color: "text-green-500" },
+  { icon: Brain, value: "6 APIs", label: "Powering Insights", color: "text-violet-500" },
 ]
 
 export default function Home() {
@@ -63,7 +63,7 @@ export default function Home() {
           <div className="text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium mb-6 animate-fade-in-up">
               <Sparkles size={16} />
-              AI-Powered Sustainable Tourism Platform
+              AI-Powered Real-Time Tourism Platform
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-bold tracking-tight mb-6 animate-fade-in-up delay-100">
@@ -73,8 +73,8 @@ export default function Home() {
             </h1>
 
             <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-10 animate-fade-in-up delay-200">
-              WanderWise uses artificial intelligence to personalize your travel experiences,
-              promote cultural heritage, and build a more sustainable future for tourism.
+              WanderWise fetches real-time data from 6 free APIs to provide live weather,
+              heritage sites, carbon calculations, and AI-powered recommendations.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up delay-300">
@@ -161,9 +161,9 @@ export default function Home() {
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { step: "01", title: "Tell Us Your Preferences", desc: "Share your interests, budget, travel dates, and sustainability priorities through our intelligent quiz." },
-              { step: "02", title: "AI Analyzes & Recommends", desc: "Our algorithms match you with ideal destinations, predict crowd levels, and calculate carbon footprints." },
-              { step: "03", title: "Travel Sustainably", desc: "Get personalized itineraries with eco-tips, heritage insights, and real-time destination intelligence." },
+              { step: "01", title: "Search Any City", desc: "Type any city worldwide — Nominatim geocoding finds it with coordinates, while Wikipedia and RestCountries enrich data." },
+              { step: "02", title: "Live Data Fetching", desc: "Open-Meteo provides weather, Overpass finds heritage sites, and our algorithms calculate sustainability scores in real-time." },
+              { step: "03", title: "AI-Powered Insights", desc: "Get carbon footprints, crowd predictions, and chat with Groq AI for personalized recommendations." },
             ].map((item, i) => (
               <div key={i} className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-sky-500 text-white font-bold text-xl mb-6">

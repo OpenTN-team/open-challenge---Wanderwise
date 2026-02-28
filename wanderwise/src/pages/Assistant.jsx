@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { chatResponses } from '../data/mockData'
-import { Send, MessageCircle, Sparkles, Bot, User, Trash2, Lightbulb } from 'lucide-react'
+import { chatWithAI, isAIConfigured } from '../services/groqAi'
+import { Send, MessageCircle, Sparkles, Bot, User, Trash2, Lightbulb, Zap, Wifi, WifiOff } from 'lucide-react'
 
 const suggestedQuestions = [
   "Tell me about Morocco",
@@ -9,41 +9,32 @@ const suggestedQuestions = [
   "Best budget-friendly trips",
   "How can I travel more sustainably?",
   "Hidden gems in Europe",
+  "Compare train vs flight carbon impact",
+  "When is the best time to visit Japan?",
 ]
 
-function getAIResponse(message) {
-  const lower = message.toLowerCase()
+const INITIAL_MESSAGE = {
+  role: 'ai',
+  content: `Hello! I'm your WanderWise AI travel companion 🌍
 
-  if (lower.match(/hello|hi|hey|bonjour|salut|greet/)) {
-    return chatResponses.greetings[0]
-  }
-  if (lower.match(/morocco|maroc|chefchaouen|fes|fez|marrakech|essaouira/)) {
-    return chatResponses.morocco[0]
-  }
-  if (lower.match(/sustain|eco|green|carbon|environment|footprint/)) {
-    return chatResponses.sustainable[0]
-  }
-  if (lower.match(/heritage|cultural|histor|ancient|preserve|monument|temple/)) {
-    return chatResponses.heritage[0]
-  }
-  if (lower.match(/budget|cheap|afford|cost|money|price|inexpensive/)) {
-    return chatResponses.budget[0]
-  }
-  return chatResponses.default[0]
+I can help you with:
+• **Destination recommendations** — Ask about any country or city
+• **Sustainability tips** — How to travel greener
+• **Cultural heritage** — Discover world treasures
+• **Budget planning** — Best value sustainable trips
+• **Weather & timing** — When to visit
+
+What destination or topic interests you?`,
+  timestamp: new Date(),
 }
 
 export default function Assistant() {
-  const [messages, setMessages] = useState([
-    {
-      role: 'ai',
-      content: chatResponses.greetings[0],
-      timestamp: new Date(),
-    },
-  ])
+  const [messages, setMessages] = useState([INITIAL_MESSAGE])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
+  const aiConfigured = isAIConfigured()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -53,26 +44,37 @@ export default function Assistant() {
     scrollToBottom()
   }, [messages])
 
-  const sendMessage = (text) => {
+  const sendMessage = async (text) => {
     const messageText = text || input.trim()
-    if (!messageText) return
+    if (!messageText || isTyping) return
 
     // Add user message
     const userMsg = { role: 'user', content: messageText, timestamp: new Date() }
-    setMessages((prev) => [...prev, userMsg])
+    const updatedMessages = [...messages, userMsg]
+    setMessages(updatedMessages)
     setInput('')
     setIsTyping(true)
 
-    // Simulate AI thinking delay
-    const delay = 800 + Math.random() * 1200
-    setTimeout(() => {
-      const aiResponse = getAIResponse(messageText)
+    try {
+      // Build conversation history for AI (skip initial greeting for cleaner context)
+      const history = updatedMessages
+        .filter((m) => m !== INITIAL_MESSAGE)
+        .map((m) => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.content }))
+
+      const aiResponse = await chatWithAI(history)
       setMessages((prev) => [
         ...prev,
         { role: 'ai', content: aiResponse, timestamp: new Date() },
       ])
+    } catch (err) {
+      console.error('Chat error:', err)
+      setMessages((prev) => [
+        ...prev,
+        { role: 'ai', content: 'Sorry, I encountered an error. Please try again!', timestamp: new Date() },
+      ])
+    } finally {
       setIsTyping(false)
-    }, delay)
+    }
   }
 
   const handleKeyDown = (e) => {
@@ -83,13 +85,7 @@ export default function Assistant() {
   }
 
   const clearChat = () => {
-    setMessages([
-      {
-        role: 'ai',
-        content: chatResponses.greetings[0],
-        timestamp: new Date(),
-      },
-    ])
+    setMessages([INITIAL_MESSAGE])
   }
 
   const formatContent = (content) => {
@@ -148,9 +144,12 @@ export default function Assistant() {
             </div>
             <div>
               <h3 className="font-bold">WanderWise AI</h3>
-              <div className="flex items-center gap-1 text-xs text-emerald-100">
+              <div className="flex items-center gap-2 text-xs text-emerald-100">
                 <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
-                Online — Ready to help
+                Online
+                <span className="px-1.5 py-0.5 rounded bg-white/15 text-[10px] font-medium flex items-center gap-1">
+                  {aiConfigured ? <><Zap size={9} /> Groq AI</> : <><Sparkles size={9} /> Local Mode</>}
+                </span>
               </div>
             </div>
           </div>
