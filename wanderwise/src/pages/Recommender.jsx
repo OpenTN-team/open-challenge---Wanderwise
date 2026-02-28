@@ -64,6 +64,9 @@ export default function Recommender() {
   const [enrichedCities, setEnrichedCities] = useState([])
   const [searchMode, setSearchMode] = useState(false) // false= mock, true= live API
   const searchInputRef = useRef(null)
+  const [visibleCount, setVisibleCount] = useState(12)
+  const loadRef = useRef(null)
+  const [selectedDest, setSelectedDest] = useState(null)
 
   const { results: cityResults, loading: searching } = useCitySearch(searchQuery)
 
@@ -178,6 +181,22 @@ export default function Recommender() {
         return 0
       })
   }, [allDestinations, selectedPrefs, budget, sustainabilityMin, sortBy])
+
+  // reset and scroll handler effects
+  useEffect(() => {
+    setVisibleCount(12)
+  }, [recommendations])
+
+  useEffect(() => {
+    if (!loadRef.current) return
+    const obs = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setVisibleCount((v) => Math.min(v + 12, recommendations.length))
+      }
+    }, { rootMargin: '200px' })
+    obs.observe(loadRef.current)
+    return () => obs.disconnect()
+  }, [recommendations])
 
   const getCrowdColor = (level) => {
     if (level === 'low') return 'text-emerald-600 bg-emerald-100'
@@ -380,11 +399,12 @@ export default function Recommender() {
 
       {/* Results Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {recommendations.map((dest, i) => (
+        {recommendations.slice(0, visibleCount).map((dest, i) => (
           <div
             key={dest.id}
-            className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in-up"
+            className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 animate-fade-in-up cursor-pointer"
             style={{ animationDelay: `${i * 80}ms` }}
+            onClick={() => setSelectedDest(dest)}
           >
             {/* Image */}
             <div className="relative h-48 bg-slate-200">
@@ -503,11 +523,268 @@ export default function Recommender() {
         ))}
       </div>
 
+      {visibleCount < recommendations.length && (
+        <div ref={loadRef} className="h-16 flex items-center justify-center">
+          <Loader2 size={24} className="animate-spin text-slate-400" />
+        </div>
+      )}
+
       {recommendations.length === 0 && !enriching && (
         <div className="text-center py-20">
           <div className="text-6xl mb-4">🔍</div>
           <h3 className="text-xl font-bold text-slate-700 mb-2">No destinations match your criteria</h3>
           <p className="text-slate-500">Try adjusting your budget or sustainability filters, or search for a city above</p>
+        </div>
+      )}
+
+      {/* ── Detail Modal ── */}
+      {selectedDest && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          onClick={() => setSelectedDest(null)}
+        >
+          <div
+            className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Hero image */}
+            <div className="relative h-64 flex-shrink-0">
+              <img
+                src={selectedDest.image}
+                alt={selectedDest.name}
+                className="w-full h-full object-cover rounded-t-3xl"
+                onError={(e) => { e.target.src = `https://placehold.co/800x400/10b981/white?text=${encodeURIComponent(selectedDest.name)}` }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent rounded-t-3xl" />
+              {/* Close */}
+              <button
+                onClick={() => setSelectedDest(null)}
+                className="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white rounded-full p-2 backdrop-blur-sm transition"
+              >
+                <X size={20} />
+              </button>
+              {/* Title overlay */}
+              <div className="absolute bottom-5 left-6">
+                <h2 className="text-3xl font-bold text-white mb-1">{selectedDest.name}</h2>
+                <div className="flex items-center gap-2 text-white/90 text-sm">
+                  <MapPin size={14} />
+                  {selectedDest.country}
+                  {selectedDest.countryData?.flagEmoji && (
+                    <span className="text-xl ml-1">{selectedDest.countryData.flagEmoji}</span>
+                  )}
+                </div>
+              </div>
+              {/* Top-left badges */}
+              <div className="absolute top-4 left-4 flex gap-2">
+                <div className="bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 flex items-center gap-1">
+                  <Sparkles size={14} className="text-emerald-500" />
+                  <span className="text-sm font-bold text-emerald-700">{selectedDest.matchScore}%</span>
+                </div>
+                {selectedDest.isLive && (
+                  <div className="bg-emerald-500/90 rounded-full px-3 py-1 text-xs font-bold text-white flex items-center gap-1">
+                    <Globe2 size={10} /> Live
+                  </div>
+                )}
+                {selectedDest.hiddenGem && (
+                  <div className="bg-amber-400/90 rounded-full px-3 py-1 text-xs font-bold text-amber-900">
+                    ✨ Hidden Gem
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-6">
+              {/* Key metrics */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-4 bg-emerald-50 rounded-2xl">
+                  <Leaf size={20} className="text-emerald-500 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-emerald-600">{selectedDest.sustainabilityScore}</div>
+                  <div className="text-xs text-emerald-700 font-medium mt-0.5">Eco Score</div>
+                </div>
+                <div className="text-center p-4 bg-slate-50 rounded-2xl">
+                  <DollarSign size={20} className="text-slate-500 mx-auto mb-1" />
+                  <div className="text-2xl font-bold text-slate-700">${selectedDest.avgCost}</div>
+                  <div className="text-xs text-slate-500 font-medium mt-0.5">Per Day</div>
+                </div>
+                <div className="text-center p-4 bg-amber-50 rounded-2xl">
+                  <Users size={20} className="text-amber-500 mx-auto mb-1" />
+                  <div className={`text-lg font-bold capitalize mt-0.5 ${
+                    selectedDest.crowdLevel === 'low' ? 'text-emerald-600'
+                    : selectedDest.crowdLevel === 'medium' ? 'text-amber-600'
+                    : 'text-red-600'
+                  }`}>{selectedDest.crowdLevel}</div>
+                  <div className="text-xs text-amber-700 font-medium">Crowds</div>
+                </div>
+              </div>
+
+              {/* About */}
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 mb-2">About</h3>
+                <p className="text-slate-600 leading-relaxed text-sm">{selectedDest.description}</p>
+              </div>
+
+              {/* Live weather */}
+              {selectedDest.weather?.current && (
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <Thermometer size={18} className="text-sky-500" /> Current Weather
+                  </h3>
+                  <div className="bg-gradient-to-br from-sky-50 to-blue-50 rounded-2xl p-4">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="text-5xl font-bold text-sky-700">
+                        {Math.round(selectedDest.weather.current.temperature)}°C
+                      </div>
+                      <div>
+                        <div className="text-sky-600 font-medium">
+                          {selectedDest.weather.current.weatherText || 'Current conditions'}
+                        </div>
+                        {selectedDest.weather.current.humidity != null && (
+                          <div className="text-xs text-sky-400 mt-0.5">
+                            Humidity: {selectedDest.weather.current.humidity}%
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* 7-day forecast */}
+                    {selectedDest.weather.daily?.length > 0 && (
+                      <div className="grid grid-cols-7 gap-1 border-t border-sky-100 pt-3">
+                        {selectedDest.weather.daily.slice(0, 7).map((day, idx) => (
+                          <div key={idx} className="text-center">
+                            <div className="text-xs text-sky-400 mb-1">
+                              {idx === 0
+                                ? 'Today'
+                                : new Date(Date.now() + idx * 86400000).toLocaleDateString('en', { weekday: 'short' })}
+                            </div>
+                            <div className="text-sm font-bold text-sky-700">
+                              {Math.round(day.maxTemp ?? day.temp ?? day.temperature_2m_max ?? 0)}°
+                            </div>
+                            <div className="text-xs text-sky-400">
+                              {Math.round(day.minTemp ?? (day.temp - 5) ?? day.temperature_2m_min ?? 0)}°
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Country info */}
+              {selectedDest.countryData && (
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <Globe2 size={18} className="text-violet-500" /> Country Info
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {selectedDest.countryData.capital && (
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="text-xs text-slate-400 mb-1">Capital</div>
+                        <div className="font-semibold text-slate-700">
+                          {Array.isArray(selectedDest.countryData.capital)
+                            ? selectedDest.countryData.capital[0]
+                            : selectedDest.countryData.capital}
+                        </div>
+                      </div>
+                    )}
+                    {selectedDest.countryData.population && (
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="text-xs text-slate-400 mb-1">Population</div>
+                        <div className="font-semibold text-slate-700">
+                          {(selectedDest.countryData.population / 1_000_000).toFixed(1)}M
+                        </div>
+                      </div>
+                    )}
+                    {selectedDest.countryData.region && (
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="text-xs text-slate-400 mb-1">Region</div>
+                        <div className="font-semibold text-slate-700">{selectedDest.countryData.region}</div>
+                      </div>
+                    )}
+                    {selectedDest.countryData.currencies && (
+                      <div className="bg-slate-50 rounded-xl p-3">
+                        <div className="text-xs text-slate-400 mb-1">Currency</div>
+                        <div className="font-semibold text-slate-700 text-sm">
+                          {Object.values(selectedDest.countryData.currencies)
+                            .map((c) => `${c.name}${c.symbol ? ` (${c.symbol})` : ''}`)
+                            .join(', ')}
+                        </div>
+                      </div>
+                    )}
+                    {selectedDest.countryData.languages && (
+                      <div className="bg-slate-50 rounded-xl p-3 col-span-2">
+                        <div className="text-xs text-slate-400 mb-1">Languages</div>
+                        <div className="font-semibold text-slate-700">
+                          {Object.values(selectedDest.countryData.languages).join(', ')}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Eco tips */}
+              <div>
+                <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                  <Leaf size={18} className="text-emerald-500" /> Eco Travel Tips
+                </h3>
+                <div className="space-y-2">
+                  {(selectedDest.ecoTips || []).map((tip, i) => (
+                    <div key={i} className="flex items-start gap-3 p-3 bg-emerald-50 rounded-xl">
+                      <span className="text-emerald-500 text-sm mt-0.5">🌿</span>
+                      <span className="text-sm text-emerald-700">{tip}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cultural highlights */}
+              {(selectedDest.culturalHighlights || []).length > 0 && (
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <Star size={18} className="text-amber-500" /> Cultural Highlights
+                  </h3>
+                  <div className="space-y-2">
+                    {selectedDest.culturalHighlights.map((h, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 bg-amber-50 rounded-xl">
+                        <span className="text-amber-500 text-sm mt-0.5">⭐</span>
+                        <span className="text-sm text-amber-700">{h}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Best time + carbon */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 bg-teal-50 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Clock size={16} className="text-teal-500" />
+                    <span className="text-sm font-semibold text-teal-700">Best Time</span>
+                  </div>
+                  <div className="text-teal-600 font-bold text-sm">{selectedDest.bestTime}</div>
+                </div>
+                <div className="p-4 bg-orange-50 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Cloud size={16} className="text-orange-400" />
+                    <span className="text-sm font-semibold text-orange-700">Carbon</span>
+                  </div>
+                  <div className="text-orange-600 font-bold">{selectedDest.carbonFootprint}× avg</div>
+                </div>
+              </div>
+
+              {/* Wikipedia link */}
+              <a
+                href={`https://en.wikipedia.org/wiki/${encodeURIComponent(selectedDest.name)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-medium transition text-sm"
+              >
+                <Globe2 size={16} />
+                Read more on Wikipedia
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>
